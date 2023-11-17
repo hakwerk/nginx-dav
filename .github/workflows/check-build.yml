@@ -1,0 +1,77 @@
+name: Check and Build
+
+on:
+  push:
+  schedule:
+    - cron: '30 6 * * 6'
+  workflow_dispatch:
+
+jobs:
+  check-newer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find latest nginx release / tag
+        id: nginx
+        uses: oprypin/find-latest-tag@v1
+        with:
+          repository: nginx/nginx
+
+      - name: Strip prefix from version
+        run: |
+          TAG=${{ steps.nginx.outputs.tag }}
+          echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
+
+      - name: Show latest nginx version
+        run: echo "** nginx is at version $VERSION"
+
+      - name: debug
+        run: |
+          echo "repository_owner: ${{ github.repository_owner }}"
+          echo "repository: ${{ github.repository }}"
+
+      - name: Check if we have that version already
+        id: our_meta
+        uses: David-Lor/action-dockerhub-get-tag-metadata@0.1.1
+        with:
+          image: "${{ github.repository }}:${{ env.VERSION }}"
+        continue-on-error: true
+
+      - name: Show our metadata
+        run: echo "** our digest is ${{ steps.our_meta.outputs.digest }}"
+
+      - name: Check if the official nginx image has that version already
+        id: nginx_meta
+        if: steps.our_meta.outputs.digest == ''
+        uses: David-Lor/action-dockerhub-get-tag-metadata@0.1.1
+        with:
+          image: "nginx:${{ env.VERSION }}"
+
+      - name: Print image metadata
+        if: steps.our_meta.outputs.digest == ''
+        run: |
+          echo "** nginx digest is ${{ steps.nginx_meta.outputs.digest }}"
+
+      - name: Checkout this repo
+        if: steps.our_meta.outputs.digest == ''
+        uses: actions/checkout@v4
+        with:
+          ref: "${{ github.head_ref }}"
+
+      - name: Set up docker buildx
+        if: steps.our_meta.outputs.digest == ''
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: steps.our_meta.outputs.digest == ''
+        uses: docker/login-action@v3
+        with:
+          username: "${{ github.repository_owner }}"
+          password: "${{ secrets.DOCKER_PASSWORD }}"
+
+      - name: Build and push
+        if: steps.our_meta.outputs.digest == ''
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: "${{ github.repository }}:${{ env.VERSION }},${{ github.repository }}:latest"
+
