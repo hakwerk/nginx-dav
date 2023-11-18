@@ -6,7 +6,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Check image
         id: image_exists
@@ -31,6 +30,7 @@ jobs:
           organization: "${{ github.event.repository.owner.login }}"
           repository: "${{ github.event.repository.name }}"
           tag: 1.2.3
+        continue-on-error: true
 
       - name: Show result
         run: |
