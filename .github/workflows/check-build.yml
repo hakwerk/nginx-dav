@@ -24,11 +24,6 @@ jobs:
       - name: Show latest nginx version
         run: echo "** nginx is at version $VERSION"
 
-      - name: debug
-        run: |
-          echo "repository_owner: ${{ github.repository_owner }}"
-          echo "repository: ${{ github.repository }}"
-
       - name: Check if we have that version already
         id: our_meta
         uses: David-Lor/action-dockerhub-get-tag-metadata@0.1.1
@@ -74,4 +69,14 @@ jobs:
         with:
           push: true
           tags: "${{ github.repository }}:${{ env.VERSION }},${{ github.repository }}:latest"
+
+      - name: Notify by email
+        if: steps.our_meta.outputs.digest == ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          connection_url: ${{secrets.MAIL_CONNECTION}}
+          subject: "Built new docker image: ${{ github.repository }}:${{ env.VERSION }}"
+          to: ${{secrets.MAIL_TO}}
+          from: GitHub action
+          body: Build job of ${{github.repository}} completed successfully! Pushed new image with version tag ${{ env.VERSION }}.
 
