@@ -26,7 +26,7 @@ jobs:
 
       - name: Check if we have that version already
         id: our_meta
-        uses: David-Lor/action-dockerhub-get-tag-metadata@0.1.1
+        uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "${{ github.repository }}:${{ env.VERSION }}"
         continue-on-error: true
@@ -37,7 +37,7 @@ jobs:
       - name: Check if the official nginx image has that version already
         id: nginx_meta
         if: steps.our_meta.outputs.digest == ''
-        uses: David-Lor/action-dockerhub-get-tag-metadata@0.1.1
+        uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "nginx:${{ env.VERSION }}"
 
