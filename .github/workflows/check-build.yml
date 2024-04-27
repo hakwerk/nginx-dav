@@ -13,6 +13,9 @@ on:
 jobs:
   check-newer:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [amd64, arm64]
     steps:
       - name: Find latest nginx release / tag
         id: nginx
@@ -33,6 +36,7 @@ jobs:
         uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "${{ github.repository }}:${{ env.VERSION }}"
+          architecture: "${{ matrix.platform }}"
         continue-on-error: true
 
       - name: Show our metadata
@@ -44,6 +48,7 @@ jobs:
         uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "nginx:${{ env.VERSION }}"
+          architecture: "${{ matrix.platform }}"
 
       - name: Print image metadata
         if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
@@ -55,6 +60,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: "${{ github.head_ref }}"
+
+      - name: Set the correct base image in Dockerfile
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          include: Dockerfile
+          find: "nginx:mainline"
+          replace: "nginx@${{ steps.nginx_meta.outputs.digest }}"
+          regex: false
 
       - name: Set up docker buildx
         if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
@@ -71,7 +85,7 @@ jobs:
         if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: docker/build-push-action@v5
         with:
-          platforms: linux/amd64,linux/arm64
+          platforms: "linux/${{ matrix.platform }}"
           push: true
           tags: "${{ github.repository }}:${{ env.VERSION }},${{ github.repository }}:latest"
 
@@ -80,8 +94,7 @@ jobs:
         uses: dawidd6/action-send-mail@v3
         with:
           connection_url: ${{secrets.MAIL_CONNECTION}}
-          subject: "Built new docker image: ${{ github.repository }}:${{ env.VERSION }}"
+          subject: "Built new docker image: ${{ github.repository }}:${{ env.VERSION }} (${{ matrix.platform }})"
           to: ${{secrets.MAIL_TO}}
           from: GitHub action
-          body: Build job of ${{github.repository}} completed successfully! Pushed new image with version tag ${{ env.VERSION }}.
-
+          body: Build job of ${{github.repository}} completed successfully for platform ${{ matrix.platform }}! Pushed new image with version tag ${{ env.VERSION }}.
