@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: '30 6 * * 6'
   workflow_dispatch:
+    inputs:
+      force_publish:
+        type: boolean
+        required: false
 
 jobs:
   check-newer:
@@ -36,35 +40,35 @@ jobs:
 
       - name: Check if the official nginx image has that version already
         id: nginx_meta
-        if: steps.our_meta.outputs.digest == ''
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "nginx:${{ env.VERSION }}"
 
       - name: Print image metadata
-        if: steps.our_meta.outputs.digest == ''
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         run: |
           echo "** nginx digest is ${{ steps.nginx_meta.outputs.digest }}"
 
       - name: Checkout this repo
-        if: steps.our_meta.outputs.digest == ''
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: actions/checkout@v4
         with:
           ref: "${{ github.head_ref }}"
 
       - name: Set up docker buildx
-        if: steps.our_meta.outputs.digest == ''
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
-        if: steps.our_meta.outputs.digest == ''
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: docker/login-action@v3
         with:
           username: "${{ github.repository_owner }}"
           password: "${{ secrets.DOCKER_PASSWORD }}"
 
       - name: Build and push
-        if: steps.our_meta.outputs.digest == ''
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: docker/build-push-action@v5
         with:
           platforms: linux/amd64,linux/arm64
