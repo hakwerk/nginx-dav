@@ -62,14 +62,19 @@ jobs:
           ref: "${{ github.head_ref }}"
 
       - name: Set the correct base image in Dockerfile
+        id: rewrite_debug
         if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: jacobtomlinson/gha-find-replace@v3
         with:
-          include: Dockerfile
+          include: "**Dockerfile"
           find: "nginx:mainline"
           replace: "nginx@${{ steps.nginx_meta.outputs.digest }}"
           regex: false
-
+      - name: DEBUG
+        if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
+        run: |
+          echo "** number of changed files is ${{ steps.rewrite_debug.outputs.modifiedFiles }}"
+      
       - name: Set up docker buildx
         if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: docker/setup-buildx-action@v3
@@ -85,6 +90,7 @@ jobs:
         if: steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish
         uses: docker/build-push-action@v5
         with:
+          context: .
           platforms: "linux/${{ matrix.platform }}"
           push: true
           tags: "${{ github.repository }}:${{ env.VERSION }},${{ github.repository }}:latest"
