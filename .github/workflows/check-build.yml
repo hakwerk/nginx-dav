@@ -62,14 +62,17 @@ jobs:
       - name: Set outputs
         id: set-outputs
         run: |
-          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_ENV}"
-          echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_ENV}"
+          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
+          echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
+
+    outputs:
+      push: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
 
   build:
     needs:
       - prepare
     runs-on: ubuntu-latest
-    if: env.push-linux-amd64 || env.push-linux-arm64
+    if: needs.prepare.outputs.push
     strategy:
       matrix:
         platform:
@@ -143,7 +146,7 @@ jobs:
       - prepare
       - build
     runs-on: ubuntu-latest
-    if: env.push-linux-amd64 || env.push-linux-arm64
+    if: needs.prepare.outputs.push
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
