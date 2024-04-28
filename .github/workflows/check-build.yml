@@ -66,11 +66,14 @@ jobs:
           echo "our-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
           echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
 
+    outputs:
+       push-$(echo '${{ matrix.platform }}' | tr / -): ${{ steps.set-outputs.outputs.push-$(echo '${{ matrix.platform }}' | tr / -) }}
+
   build:
     needs:
       - prepare
     runs-on: ubuntu-latest
-    if: push-linux-amd64 || push-linux-arm64
+    if: needs.prepare.outputs.push-linux-amd64 || push-linux-arm64
     strategy:
       matrix:
         platform:
