@@ -87,12 +87,17 @@ jobs:
           ref: "${{ github.head_ref }}"
           fetch-depth: 1
 
+      - name: Nginx digest var
+        id: nginx-var
+        run: |
+          echo "ngdigest=nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)" >> "${GITHUB_OUTPUT}"
+
       - name: Set the correct base image in Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           include: "**Dockerfile"
           find: "nginx:mainline"
-          replace: "nginx@${{ nginx-digest-$(echo '${{ matrix.platform }}' | tr / -) }}"
+          replace: "nginx@${{ ngdigest }}"
           regex: false
       
       - name: Set up docker buildx
