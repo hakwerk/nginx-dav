@@ -66,10 +66,6 @@ jobs:
           echo "our-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
           echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
 
-      - name: Set outputs
-        run: |
-          echo "hello?"
-
   build:
     needs:
       - prepare
@@ -97,7 +93,7 @@ jobs:
         with:
           include: "**Dockerfile"
           find: "nginx:mainline"
-          replace: "nginx@${{ ngdigest }}"
+          replace: "nginx@${{ steps.nginx-var.outputs.ngdigest }}"
           regex: false
       
       - name: Set up docker buildx
