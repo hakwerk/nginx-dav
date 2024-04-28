@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-newer:
+  prepare:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -66,9 +66,13 @@ jobs:
           echo "our-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
           echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
 
+      - name: Set outputs
+        run: |
+          echo "hello?"
+
   build:
     needs:
-      - check-newer
+      - prepare
     runs-on: ubuntu-latest
     if: push-linux-amd64 || push-linux-arm64
     strategy:
@@ -136,7 +140,7 @@ jobs:
 
   push:
     needs:
-      - check-newer
+      - prepare
       - build
     runs-on: ubuntu-latest
     if: push-linux-amd64 || push-linux-arm64
