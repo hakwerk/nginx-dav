@@ -62,18 +62,14 @@ jobs:
       - name: Set outputs
         id: set-outputs
         run: |
-          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
-          echo "our-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
-          echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
-
-    outputs:
-       push-$(echo '${{ matrix.platform }}' | tr / -): ${{ steps.set-outputs.outputs.push-$(echo '${{ matrix.platform }}' | tr / -) }}
+          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_ENV}"
+          echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_ENV}"
 
   build:
     needs:
       - prepare
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.push-linux-amd64 || push-linux-arm64
+    if: env.push-linux-amd64 || env.push-linux-arm64
     strategy:
       matrix:
         platform:
@@ -89,7 +85,7 @@ jobs:
       - name: Nginx digest var
         id: nginx-var
         run: |
-          echo "ngdigest=nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)" >> "${GITHUB_OUTPUT}"
+          echo "ngdigest=${{ env.nginx-digest-$(echo '${{ matrix.platform }}' | tr / -) }}" >> "${GITHUB_OUTPUT}"
 
       - name: Set the correct base image in Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
@@ -147,7 +143,7 @@ jobs:
       - prepare
       - build
     runs-on: ubuntu-latest
-    if: push-linux-amd64 || push-linux-arm64
+    if: env.push-linux-amd64 || env.push-linux-arm64
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
