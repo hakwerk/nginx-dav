@@ -66,11 +66,13 @@ jobs:
         run: |
           echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
           echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
+          echo "version=${{ env.VERSION }}" >> "${GITHUB_OUTPUT}"
 
     outputs:
       push: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
       nginx-digest-linux-amd64: ${{ steps.set-outputs.outputs.nginx-digest-linux-amd64 }}
       nginx-digest-linux-arm64: ${{ steps.set-outputs.outputs.nginx-digest-linux-arm64 }}
+      version: ${{ steps.set-outputs.outputs.version }}
 
   build:
     needs:
@@ -179,18 +181,18 @@ jobs:
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
-          docker buildx imagetools create -t ${{ github.repository }}:${{ env.VERSION }} -t ${{ github.repository }}:latest \
+          docker buildx imagetools create -t ${{ github.repository }}:${{ needs.prepare.outputs.version }} -t ${{ github.repository }}:latest \
             $(printf '${{ github.repository }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect '${{ github.repository }}:${{ env.VERSION }}'
+          docker buildx imagetools inspect '${{ github.repository }}:${{ needs.prepare.outputs.version }}'
 
       - name: Notify by email
         uses: dawidd6/action-send-mail@v3
         with:
           connection_url: ${{secrets.MAIL_CONNECTION}}
-          subject: "Built new docker image: ${{ github.repository }}:${{ env.VERSION }}"
+          subject: "Built new docker image: ${{ github.repository }}:${{ needs.prepare.outputs.version }}"
           to: ${{secrets.MAIL_TO}}
           from: GitHub action
-          body: Build job of ${{github.repository}} completed successfully! Pushed new image with version tag ${{ env.VERSION }}.
+          body: Build job of ${{github.repository}} completed successfully! Pushed new image with version tag ${{ needs.prepare.outputs.version }}.
