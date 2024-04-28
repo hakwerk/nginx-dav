@@ -69,6 +69,8 @@ jobs:
 
     outputs:
       push: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
+      nginx-digest-linux-amd64: ${{ steps.set-outputs.outputs.nginx-digest-linux-amd64 }}
+      nginx-digest-linux-arm64: ${{ steps.set-outputs.outputs.nginx-digest-linux-arm64 }}
 
   build:
     needs:
@@ -90,14 +92,16 @@ jobs:
       - name: Nginx digest var
         id: nginx-var
         run: |
-          echo "ngdigest=${nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)}" >> "${GITHUB_OUTPUT}"
+          DNAME=$(echo '${{ matrix.platform }}' | tr / -)
+          DIGEST="${{ nginx-digest-$DNAME }}"
+          echo "ngdigest=${DIGEST}" >> $GITHUB_ENV
 
       - name: Set the correct base image in Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           include: "**Dockerfile"
           find: "nginx:mainline"
-          replace: "nginx@${{ steps.nginx-var.outputs.ngdigest }}"
+          replace: "nginx@${{ env.DIGEST }}"
           regex: false
       
       - name: Set up docker buildx
