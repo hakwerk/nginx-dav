@@ -85,7 +85,7 @@ jobs:
       - name: Nginx digest var
         id: nginx-var
         run: |
-          echo "ngdigest=${{ env.nginx-digest-$(echo '${{ matrix.platform }}' | tr / -) }}" >> "${GITHUB_OUTPUT}"
+          echo "ngdigest=nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)" >> "${GITHUB_OUTPUT}"
 
       - name: Set the correct base image in Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
