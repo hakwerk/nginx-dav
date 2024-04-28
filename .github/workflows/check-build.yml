@@ -68,9 +68,9 @@ jobs:
 
   build:
     needs:
-	  - check-newer
+      - check-newer
     runs-on: ubuntu-latest
-	if: push-linux-amd64 || push-linux-arm64
+    if: push-linux-amd64 || push-linux-arm64
     strategy:
       matrix:
         platform:
@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: "${{ github.head_ref }}"
-		  fetch-depth: 1
+          fetch-depth: 1
 
       - name: Set the correct base image in Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
@@ -108,7 +108,7 @@ jobs:
           echo 'cache-from=type=gha,scope=${{ github.ref_name }}-${{ matrix.platform }}' >> "${GITHUB_OUTPUT}"
 
       - name: Build and push by digest
-	    id: build
+     id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -132,14 +132,14 @@ jobs:
           name: ${{ steps.vars.outputs.artifact-name }}
           path: /tmp/digests/*
           if-no-files-found: error
-          retention-days: 1			
+          retention-days: 1
 
   push:
     needs:
       - check-newer
       - build
     runs-on: ubuntu-latest
-	if: push-linux-amd64 || push-linux-arm64
+    if: push-linux-amd64 || push-linux-arm64
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
@@ -147,9 +147,9 @@ jobs:
           pattern: digest-*
           merge-multiple: true
           path: /tmp/digests
-	  - name: DEBUG1
-	    run: |
-		  ls -latr /tmp/digests
+      - name: DEBUG1
+        run: |
+          ls -latr /tmp/digests
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
