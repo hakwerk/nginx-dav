@@ -89,19 +89,22 @@ jobs:
           ref: "${{ github.head_ref }}"
           fetch-depth: 1
 
-      - name: Nginx digest var
-        id: nginx-var
+      - name: Nginx digest var (amd64)
+        if: matrix.platform == 'linux/amd64'
         run: |
-          DNAME=$(echo '${{ matrix.platform }}' | tr / -)
-          DIGEST="${{ nginx-digest-$DNAME }}"
-          echo "ngdigest=${DIGEST}" >> $GITHUB_ENV
+          echo "ngdigest=${{ needs.prepare.outputs.nginx-digest-linux-amd64 }}" >> $GITHUB_ENV
+
+      - name: Nginx digest var (arm64)
+        if: matrix.platform == 'linux/arm64'
+        run: |
+          echo "ngdigest=${{ needs.prepare.outputs.nginx-digest-linux-arm64 }}" >> $GITHUB_ENV
 
       - name: Set the correct base image in Dockerfile
         uses: jacobtomlinson/gha-find-replace@v3
         with:
           include: "**Dockerfile"
           find: "nginx:mainline"
-          replace: "nginx@${{ env.DIGEST }}"
+          replace: "nginx@${{ env.ngdigest }}"
           regex: false
       
       - name: Set up docker buildx
