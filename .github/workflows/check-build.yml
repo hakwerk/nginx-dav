@@ -29,10 +29,12 @@ jobs:
         with:
           repository: nginx/nginx
 
-      - name: Strip prefix from version
+      - name: Strip prefix from version, derive architecture from matrix.platform
         run: |
           TAG=${{ steps.nginx.outputs.tag }}
           echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
+          ARCH="${{ matrix.platform }}"
+          echo "ARCHITECURE=${ARCH#linux/}" >> $GITHUB_ENV
 
       - name: Show latest nginx version
         run: echo "** nginx is at version $VERSION"
@@ -42,7 +44,7 @@ jobs:
         uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "${{ github.repository }}:${{ env.VERSION }}"
-          architecture: "${{ matrix.platform }}"
+          architecture: "${{ env.ARCHITECURE }}"
         continue-on-error: true
 
       - name: Show our metadata
@@ -53,7 +55,7 @@ jobs:
         uses: hakwerk/gha-docker-registry-tag-info@v1
         with:
           image: "nginx:${{ env.VERSION }}"
-          architecture: "${{ matrix.platform }}"
+          architecture: "${{ env.ARCHITECURE }}"
 
       - name: Print image metadata
         run: |
