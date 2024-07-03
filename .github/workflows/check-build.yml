@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Find latest nginx release tags
         id: nginx
-        uses: oraad/get-tags-action@v1
+        uses: oraad/get-tags-action@v1.0.0
         with:
           repo: nginx/nginx
           limit: 5
