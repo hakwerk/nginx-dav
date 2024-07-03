@@ -29,9 +29,9 @@ jobs:
     strategy:
       matrix:
         nginx_tag: ${{fromJson(needs.job1.outputs.nginx_tags)}}
-      platform:
-        - linux/amd64
-        - linux/arm64
+        platform:
+          - linux/amd64
+          - linux/arm64
 
     steps:
       - name: debug
