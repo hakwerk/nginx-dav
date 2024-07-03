@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        nginx_tag: ${{ needs.get_tags.outputs.nginx_tags }}
+        nginx_tag: ${{ fromJson(needs.get_tags.outputs.nginx_tags) }}
         platform:
           - linux/amd64
           - linux/arm64
