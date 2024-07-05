@@ -18,17 +18,18 @@ jobs:
     steps:
       - name: Find latest nginx release tags
         id: nginx
-        uses: oraad/get-tags-action@v1.0.0
+        uses: hakwerk/gha-git-repo-tags@main
         with:
-          repo: nginx/nginx
-          limit: 5
+          repository: nginx/nginx
+          limit: 4
+          reverse: true
 
   prepare:
     needs: get_tags
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        nginx_tag: ${{ fromJson(needs.get_tags.outputs.nginx_tags) }}
+        nginx_tag: ${{ fromJson( needs.get_tags.outputs.nginx_tags ) }}
         platform:
           - linux/amd64
           - linux/arm64
