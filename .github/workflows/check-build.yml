@@ -35,8 +35,8 @@ jobs:
           - linux/arm64
 
     steps:
-      - name: debug
-        run: echo ${{ matrix.nginx_tag }}
-      - name: debug
-        run: echo ${{ matrix.platform }}
+      - uses: hakwerk/do-build@multiple
+        with:
+          nginx_tag: ${{ matrix.nginx_tag }}
+          platform: ${{ matrix.platform }}
 
