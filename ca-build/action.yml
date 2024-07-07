@@ -1,0 +1,19 @@
+name: "Test composite workflow"
+description: "Do some stuff for a matrix job"
+
+inputs:
+  nginx_tag:
+    description: "Tag / version of nginx"
+    required: true
+  platform:
+    description: "OS plaform to build for"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: debug
+      run: echo ${{ inputs.nginx_tag }}
+    - name: debug
+      run: echo ${{ inputs.platform }}
+
