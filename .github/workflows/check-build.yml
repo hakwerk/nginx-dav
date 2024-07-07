@@ -18,10 +18,10 @@ jobs:
     steps:
       - name: Find latest nginx release tags
         id: nginx
-        uses: hakwerk/gha-git-repo-tags@main
+        uses: hakwerk/gha-git-repo-tags@v1
         with:
           repository: nginx/nginx
-          limit: 4
+          limit: 5
           reverse: true
 
   prepare:
