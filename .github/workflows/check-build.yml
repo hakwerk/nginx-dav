@@ -35,7 +35,7 @@ jobs:
           - linux/arm64
 
     steps:
-      - uses: ./ca-build
+      - uses: hakwerk/gha-composite-actions/test@main
         with:
           nginx_tag: ${{ matrix.nginx_tag }}
           platform: ${{ matrix.platform }}
