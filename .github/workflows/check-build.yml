@@ -41,7 +41,7 @@ jobs:
 
       - name: Check if we have that version already
         id: our_meta
-        uses: hakwerk/gha-docker-registry-tag-info@v1
+        uses: hakwerk/gha-docker-registry-tag-info@v2
         with:
           image: "${{ github.repository }}:${{ env.VERSION }}"
           architecture: "${{ env.ARCHITECURE }}"
@@ -52,7 +52,7 @@ jobs:
 
       - name: Check if the official nginx image has that version already
         id: nginx_meta
-        uses: hakwerk/gha-docker-registry-tag-info@v1
+        uses: hakwerk/gha-docker-registry-tag-info@v2
         with:
           image: "nginx:${{ env.VERSION }}"
           architecture: "${{ env.ARCHITECURE }}"
