@@ -84,10 +84,21 @@ jobs:
           nginx_tag: ${{ env.VERSION }}
           nginx-digest-linux-amd64: ${{ steps.set-outputs.outputs.nginx-digest-linux-amd64 }}
           nginx-digest-linux-arm64: ${{ steps.set-outputs.outputs.nginx-digest-linux-arm64 }}
+          dockerpwd: ${{ secrets.DOCKER_PASSWORD }}
 
+    outputs:
+      push: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
 
+  push:
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: needs.prepare.outputs.push
+    strategy:
+      matrix:
+        nginx_tag: ${{ fromJson( needs.get_tags.outputs.nginx_tags ) }}
+
+    steps:
       - uses: hakwerk/gha-composite-actions/push-nginx@main
-        if: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
         with:
           nginx_tag: ${{ env.VERSION }}
 
