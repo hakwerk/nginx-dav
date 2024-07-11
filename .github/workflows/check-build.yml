@@ -15,184 +15,79 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  get_tags:
+    runs-on: ubuntu-latest
+    outputs:
+      nginx_tags: ${{ steps.nginx.outputs.tags }}
+    steps:
+      - name: Find latest nginx release tags
+        id: nginx
+        uses: hakwerk/gha-git-repo-tags@v1
+        with:
+          repository: nginx/nginx
+          limit: 5
+          reverse: true
+
   prepare:
+    needs: get_tags
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        nginx_tag: ${{ fromJson( needs.get_tags.outputs.nginx_tags ) }}
         platform:
           - linux/amd64
           - linux/arm64
-    steps:
-      - name: Find latest nginx release / tag
-        id: nginx
-        uses: oprypin/find-latest-tag@v1
-        with:
-          repository: nginx/nginx
 
+    steps:
       - name: Strip prefix from version, derive architecture from matrix.platform
         run: |
-          TAG=${{ steps.nginx.outputs.tag }}
+          TAG=${{ matrix.nginx_tag }}
           echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
           ARCH="${{ matrix.platform }}"
           echo "ARCHITECURE=${ARCH#linux/}" >> $GITHUB_ENV
 
       - name: Show latest nginx version
-        run: echo "** nginx is at version $VERSION"
+        run: echo "** Checking nginx version $VERSION"
 
       - name: Check if we have that version already
         id: our_meta
-        uses: hakwerk/gha-docker-registry-tag-info@v1
+        uses: hakwerk/gha-docker-registry-tag-info@v2
         with:
           image: "${{ github.repository }}:${{ env.VERSION }}"
           architecture: "${{ env.ARCHITECURE }}"
         continue-on-error: true
 
       - name: Show our metadata
-        run: echo "** our digest is ${{ steps.our_meta.outputs.digest }}"
+        run: echo "** Our digest is ${{ steps.our_meta.outputs.digest }}"
 
       - name: Check if the official nginx image has that version already
         id: nginx_meta
-        uses: hakwerk/gha-docker-registry-tag-info@v1
+        uses: hakwerk/gha-docker-registry-tag-info@v2
         with:
           image: "nginx:${{ env.VERSION }}"
           architecture: "${{ env.ARCHITECURE }}"
 
       - name: Print image metadata
         run: |
-          echo "** nginx digest is ${{ steps.nginx_meta.outputs.digest }}"
+          echo "** Nginx digest is ${{ steps.nginx_meta.outputs.digest }}"
 
       - name: Set outputs
         id: set-outputs
         run: |
           echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
           echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
-          echo "version=${{ env.VERSION }}" >> "${GITHUB_OUTPUT}"
+          echo "version-$(echo '${{ env.VERSION }}' | tr / -)=${{ env.VERSION }}" >> "${GITHUB_OUTPUT}"
 
-    outputs:
-      push: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
-      nginx-digest-linux-amd64: ${{ steps.set-outputs.outputs.nginx-digest-linux-amd64 }}
-      nginx-digest-linux-arm64: ${{ steps.set-outputs.outputs.nginx-digest-linux-arm64 }}
-      version: ${{ steps.set-outputs.outputs.version }}
-
-  build:
-    needs:
-      - prepare
-    runs-on: ubuntu-latest
-    if: needs.prepare.outputs.push
-    strategy:
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
-    steps:
-      - name: Checkout this repo
-        uses: actions/checkout@v4
+      - uses: hakwerk/gha-composite-actions/build-nginx@main
+        if: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
         with:
-          ref: "${{ github.head_ref }}"
-          fetch-depth: 1
+          nginx_tag: ${{ env.VERSION }}
+          nginx-digest-linux-amd64: ${{ steps.set-outputs.outputs.nginx-digest-linux-amd64 }}
+          nginx-digest-linux-arm64: ${{ steps.set-outputs.outputs.nginx-digest-linux-arm64 }}
 
-      - name: Nginx digest var (amd64)
-        if: matrix.platform == 'linux/amd64'
-        run: |
-          echo "ngdigest=${{ needs.prepare.outputs.nginx-digest-linux-amd64 }}" >> $GITHUB_ENV
 
-      - name: Nginx digest var (arm64)
-        if: matrix.platform == 'linux/arm64'
-        run: |
-          echo "ngdigest=${{ needs.prepare.outputs.nginx-digest-linux-arm64 }}" >> $GITHUB_ENV
-
-      - name: Set the correct base image in Dockerfile
-        uses: jacobtomlinson/gha-find-replace@v3
+      - uses: hakwerk/gha-composite-actions/push-nginx@main
+        if: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
         with:
-          include: "**Dockerfile"
-          find: "nginx:mainline"
-          replace: "nginx@${{ env.ngdigest }}"
-          regex: false
-      
-      - name: Set up docker buildx
-        uses: docker/setup-buildx-action@v3
+          nginx_tag: ${{ env.VERSION }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: "${{ github.repository_owner }}"
-          password: "${{ secrets.DOCKER_PASSWORD }}"
-
-      - name: Set vars
-        id: vars
-        run: |
-          echo "artifact-name=digest-$(echo '${{ matrix.platform }}' | tr / -)" >> "${GITHUB_OUTPUT}"
-          echo 'cache-to=type=gha,scope=${{ github.ref_name }}-${{ matrix.platform }}' >> "${GITHUB_OUTPUT}"
-          echo 'cache-from=type=gha,scope=${{ github.ref_name }}-${{ matrix.platform }}' >> "${GITHUB_OUTPUT}"
-
-      - name: Build and push by digest
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: "${{ matrix.platform }}"
-          outputs: |
-            type=image,name=${{ github.repository }},push-by-digest=true,name-canonical=true,push=true
-          cache-from: |
-            ${{ steps.vars.outputs.cache-from }}
-          cache-to: |
-            ${{ steps.vars.outputs.cache-to }}
-
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest='${{ steps.build.outputs.digest }}'
-          touch "/tmp/digests/${digest#sha256:}"
-
-      - name: Upload digest
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.vars.outputs.artifact-name }}
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
-  push:
-    needs:
-      - prepare
-      - build
-    runs-on: ubuntu-latest
-    if: needs.prepare.outputs.push
-    steps:
-      - name: Download digests
-        uses: actions/download-artifact@v4
-        with:
-          pattern: digest-*
-          merge-multiple: true
-          path: /tmp/digests
-      - name: DEBUG1
-        run: |
-          ls -latr /tmp/digests
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: "${{ github.repository_owner }}"
-          password: "${{ secrets.DOCKER_PASSWORD }}"
-
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
-        run: |
-          docker buildx imagetools create -t ${{ github.repository }}:${{ needs.prepare.outputs.version }} -t ${{ github.repository }}:latest \
-            $(printf '${{ github.repository }}@sha256:%s ' *)
-
-      - name: Inspect image
-        run: |
-          docker buildx imagetools inspect '${{ github.repository }}:${{ needs.prepare.outputs.version }}'
-
-      - name: Notify by email
-        uses: dawidd6/action-send-mail@v3
-        with:
-          connection_url: ${{secrets.MAIL_CONNECTION}}
-          subject: "Built new docker image: ${{ github.repository }}:${{ needs.prepare.outputs.version }}"
-          to: ${{secrets.MAIL_TO}}
-          from: GitHub action
-          body: Build job of ${{github.repository}} completed successfully! Pushed new image with version tag ${{ needs.prepare.outputs.version }}.
