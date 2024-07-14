@@ -100,9 +100,14 @@ jobs:
         nginx_tag: ${{ fromJson( needs.get_tags.outputs.nginx_tags ) }}
 
     steps:
+      - name: Strip prefix from version
+        run: |
+          TAG=${{ matrix.nginx_tag }}
+          echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
+
       - uses: hakwerk/gha-composite-actions/push-nginx@main
         with:
-          nginx_tag: ${{ matrix.nginx_tag }}
+          nginx_tag: ${{ env.VERSION }}
           dockerpwd: ${{ secrets.DOCKER_PASSWORD }}
           mail_url: ${{ secrets.MAIL_CONNECTION }}
           mail_to: ${{ secrets.MAIL_TO }}
