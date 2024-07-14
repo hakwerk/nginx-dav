@@ -74,12 +74,12 @@ jobs:
       - name: Set outputs
         id: set-outputs
         run: |
-          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
-          echo "push-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
-          echo "version-$(echo '${{ env.VERSION }}' | tr / -)=${{ env.VERSION }}" >> "${GITHUB_OUTPUT}"
+          echo "nginx-digest-${{ env.VERSION }}-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> "${GITHUB_OUTPUT}"
+          echo "push-${{ env.VERSION }}-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}" >> "${GITHUB_OUTPUT}"
+          echo "version-${{ env.VERSION }}=${{ env.VERSION }}" >> "${GITHUB_OUTPUT}"
 
       - uses: hakwerk/gha-composite-actions/build-nginx@main
-        if: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
+        if: ${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}
         with:
           nginx_tag: ${{ env.VERSION }}
           nginx-digest-linux-amd64: ${{ steps.set-outputs.outputs.nginx-digest-linux-amd64 }}
@@ -87,7 +87,7 @@ jobs:
           dockerpwd: ${{ secrets.DOCKER_PASSWORD }}
 
     outputs:
-      push: ${{ steps.set-outputs.outputs.push-linux-amd64 || steps.set-outputs.outputs.push-linux-arm64 }}
+      push: ${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}
 
   push:
     needs:
