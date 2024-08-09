@@ -102,10 +102,17 @@ jobs:
         run: |
           TAG=${{ matrix.nginx_tag }}
           echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
+          a=${{ fromJson( needs.get_tags.outputs.nginx_tags )[0] }}
+          echo "a=$a"
+          b=${{ needs.get_tags.outputs.nginx_tags[0] }}
+          echo "b=$b"
+          LATEST=${{ fromJson( needs.get_tags.outputs.nginx_tags )[0] }}
+          echo "LATEST=${LATEST#release-}" >> $GITHUB_ENV
 
       - uses: hakwerk/gha-composite-actions/push-nginx@main
         with:
           nginx_tag: ${{ env.VERSION }}
+          nginx_latest: ${{ env.LATEST }}
           dockerpwd: ${{ secrets.DOCKER_PASSWORD }}
           mail_url: ${{ secrets.MAIL_CONNECTION }}
           mail_to: ${{ secrets.MAIL_TO }}
