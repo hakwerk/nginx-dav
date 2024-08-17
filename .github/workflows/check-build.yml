@@ -104,8 +104,12 @@ jobs:
           echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
           a=${{ fromJson( needs.get_tags.outputs.nginx_tags )[0] }}
           echo "a=$a"
-          b=${{ needs.get_tags.outputs.nginx_tags[0] }}
+          b=${{ fromJson( needs.get_tags.outputs.nginx_tags ).at(-1) }}
           echo "b=$b"
+          c=${{ fromJson( needs.get_tags.outputs.nginx_tags )[needs.get_tags.outputs.nginx_tags.length - 1] }}
+          echo "c=$c"
+          d=${{ fromJson( needs.get_tags.outputs.nginx_tags )[fromJson( needs.get_tags.outputs.nginx_tags ).length - 1] }}
+          echo "d=$d"
           LATEST=${{ fromJson( needs.get_tags.outputs.nginx_tags )[0] }}
           echo "LATEST=${LATEST#release-}" >> $GITHUB_ENV
 
