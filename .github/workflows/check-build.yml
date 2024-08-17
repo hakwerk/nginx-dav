@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       nginx_tags: ${{ steps.nginx.outputs.tags }}
+      nginx_latest: ${{ steps.latest.outputs.tags[0] }}
     steps:
       - name: Find latest nginx release tags
         id: nginx
@@ -27,6 +28,13 @@ jobs:
           repository: nginx/nginx
           limit: 5
           reverse: true
+      - name: Find most recent nginx tag
+        id: latest
+        uses: hakwerk/gha-git-repo-tags@v1
+        with:
+          repository: nginx/nginx
+          limit: 1
+          reverse: false
 
   prepare:
     needs: get_tags
@@ -102,11 +110,7 @@ jobs:
         run: |
           TAG=${{ matrix.nginx_tag }}
           echo "VERSION=${TAG#release-}" >> $GITHUB_ENV
-          a=${{ fromJson( needs.get_tags.outputs.nginx_tags )[0] }}
-          echo "a=$a"
-          d=${{ fromJson( needs.get_tags.outputs.nginx_tags )[fromJson( needs.get_tags.outputs.nginx_tags ).length - 1] }}
-          echo "d=$d"
-          LATEST=${{ fromJson( needs.get_tags.outputs.nginx_tags )[0] }}
+          LATEST=${{ needs.get_tags.outputs.nginx_latest }}
           echo "LATEST=${LATEST#release-}" >> $GITHUB_ENV
 
       - uses: hakwerk/gha-composite-actions/push-nginx@main
