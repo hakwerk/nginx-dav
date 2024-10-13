@@ -35,6 +35,14 @@ jobs:
           repository: nginx/nginx
           limit: 1
           reverse: false
+      - name: Show tags
+        run: |
+          THE_TAGS=${{ steps.nginx.outputs.tags }}
+          echo "tags = ${THE_TAGS}"
+          LATEST=${{ steps.latest.outputs.tags }}
+          echo "latest = ${LATEST}"
+          LATEST_SINGLE=${{ steps.latest.outputs.tags[0] }}
+          echo "latest = ${LATEST_SINGLE}"
 
   prepare:
     needs: get_tags
