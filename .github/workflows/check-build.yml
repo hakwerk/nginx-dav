@@ -41,8 +41,8 @@ jobs:
           echo "tags = ${THE_TAGS}"
           LATEST=${{ steps.latest.outputs.tags }}
           echo "latest = ${LATEST}"
-          LATEST_SINGLE=${{ steps.latest.outputs.tags[0] }}
-          echo "latest = ${LATEST_SINGLE}"
+          LATEST_SINGLE=${{ fromJson( steps.latest.outputs.tags )[0] }}
+          echo "latest (single) = ${LATEST_SINGLE}"
 
   prepare:
     needs: get_tags
