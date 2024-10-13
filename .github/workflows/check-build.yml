@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       nginx_tags: ${{ steps.nginx.outputs.tags }}
-      nginx_latest: ${{ steps.latest.outputs.tags[0] }}
+      nginx_latest: ${{ fromJson(steps.latest.outputs.tags)[0] }}
     steps:
       - name: Find latest nginx release tags
         id: nginx
@@ -39,10 +39,8 @@ jobs:
         run: |
           THE_TAGS=${{ steps.nginx.outputs.tags }}
           echo "tags = ${THE_TAGS}"
-          LATEST=${{ steps.latest.outputs.tags }}
+          LATEST=${{ fromJson(steps.latest.outputs.tags)[0] }}
           echo "latest = ${LATEST}"
-          LATEST_SINGLE=${{ fromJson( steps.latest.outputs.tags )[0] }}
-          echo "latest (single) = ${LATEST_SINGLE}"
 
   prepare:
     needs: get_tags
