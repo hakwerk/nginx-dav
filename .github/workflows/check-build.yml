@@ -63,9 +63,8 @@ jobs:
       - name: Show latest nginx version
         run: echo "** Checking nginx version $VERSION"
 
-      - name: Handle linux/arm64/v8 for v1.27.2
-        # if: ${{ matrix.platform == 'linux/arm64' && matrix.nginx_tag == 'release-1.27.2' }}
-        if: ${{ env.ARCHITECURE == 'arm64' && env.VERSION == '1.27.2' }}
+      - name: Handle linux/arm64/v8 for v1.27.2 and v1.26.2
+        if: ${{ env.ARCHITECURE == 'arm64' && (env.VERSION == '1.27.2' || env.VERSION == '1.26.2') }}
         run: |
           echo "ARCHITECURE=arm64/v8" >> $GITHUB_ENV
 
