@@ -63,11 +63,6 @@ jobs:
       - name: Show latest nginx version
         run: echo "** Checking nginx version $VERSION"
 
-      - name: Handle linux/arm64/v8 for v1.27.2 and v1.26.2
-        if: ${{ env.ARCHITECURE == 'arm64' && (env.VERSION == '1.27.2' || env.VERSION == '1.26.2') }}
-        run: |
-          echo "ARCHITECURE=arm64/v8" >> $GITHUB_ENV
-
       - name: Check if we have that version already
         id: our_meta
         uses: hakwerk/gha-docker-registry-tag-info@v2
@@ -78,6 +73,11 @@ jobs:
 
       - name: Show our metadata
         run: echo "** Our digest is ${{ steps.our_meta.outputs.digest }}"
+
+      - name: Handle linux/arm64/v8 for v1.27.2 and v1.26.2
+        if: ${{ env.ARCHITECURE == 'arm64' && (env.VERSION == '1.27.2' || env.VERSION == '1.26.2') }}
+        run: |
+          echo "ARCHITECURE=arm64/v8" >> $GITHUB_ENV
 
       - name: Check if the official nginx image has that version already
         id: nginx_meta
