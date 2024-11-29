@@ -74,8 +74,8 @@ jobs:
       - name: Show our metadata
         run: echo "** Our digest is ${{ steps.our_meta.outputs.digest }}"
 
-      - name: Handle linux/arm64/v8 for v1.27.2 and v1.26.2
-        if: ${{ env.ARCHITECURE == 'arm64' && (env.VERSION == '1.27.2' || env.VERSION == '1.26.2') }}
+      - name: Handle linux/arm64/v8 for v1.27.3/.2 and v1.26.2
+        if: ${{ env.ARCHITECURE == 'arm64' && (env.VERSION == '1.27.3' || env.VERSION == '1.27.2' || env.VERSION == '1.26.2') }}
         run: |
           echo "ARCHITECURE=arm64/v8" >> $GITHUB_ENV
 
