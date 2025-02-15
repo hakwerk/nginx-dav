@@ -13,9 +13,11 @@ RUN apt-get update -qqq && \
         ca-certificates \
         curl \
         git \
+        libaio \
         libpcre2-dev \
         libssl-dev \
         libxslt1-dev \
+        linux-headers \
         zlib1g-dev \
     && apt-get -y autoclean
 
