@@ -4,8 +4,8 @@ LABEL mantainer="hakwerk <github@hakwerk.com>"
 
 # ARG NGINX_VERSION is already set in the nginx:mainline image
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV LANG C.UTF-8
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
 
 RUN apt-get update -qqq && \
     apt-get install --no-install-recommends -qqq --yes \
