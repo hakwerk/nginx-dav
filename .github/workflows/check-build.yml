@@ -26,7 +26,7 @@ jobs:
         uses: hakwerk/gha-git-repo-tags@v1
         with:
           repository: nginx/nginx
-          limit: 5
+          limit: 10
           reverse: true
       - name: Find most recent nginx tag
         id: latest
@@ -50,7 +50,7 @@ jobs:
         nginx_tag: ${{ fromJson( needs.get_tags.outputs.nginx_tags ) }}
         platform:
           - linux/amd64
-          - linux/arm64
+          - linux/arm64/v8
 
     steps:
       - name: Strip prefix from version, derive architecture from matrix.platform
@@ -74,10 +74,10 @@ jobs:
       - name: Show our metadata
         run: echo "** Our digest is ${{ steps.our_meta.outputs.digest }}"
 
-      - name: Handle linux/arm64/v8 for v1.27.5/.4/.3/.2 and v1.26.2
-        if: ${{ env.ARCHITECURE == 'arm64' && (env.VERSION == '1.27.5' || env.VERSION == '1.27.4' || env.VERSION == '1.27.3' || env.VERSION == '1.27.2' || env.VERSION == '1.26.2') }}
+      - name: Handle linux/arm64 for v1.27.1/.0 and v1.26.1/.0
+        if: ${{ env.ARCHITECURE == 'arm64/v8' && (env.VERSION == '1.27.1' || env.VERSION == '1.27.0' || env.VERSION == '1.26.1' || env.VERSION == '1.26.0') }}
         run: |
-          echo "ARCHITECURE=arm64/v8" >> $GITHUB_ENV
+          echo "ARCHITECURE=arm64" >> $GITHUB_ENV
 
       - name: Check if the official nginx image has that version already
         id: nginx_meta
