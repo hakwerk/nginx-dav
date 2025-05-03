@@ -93,7 +93,7 @@ jobs:
       - name: Set outputs
         id: set-outputs
         run: |
-          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / -)=${{ steps.nginx_meta.outputs.digest }}" >> $GITHUB_ENV
+          echo "nginx-digest-$(echo '${{ matrix.platform }}' | tr / - | sed s/-v8//)=${{ steps.nginx_meta.outputs.digest }}" >> $GITHUB_ENV
 
       - uses: hakwerk/gha-composite-actions/build-nginx@main
         if: ${{ steps.our_meta.outputs.digest == '' || github.event.inputs.force_publish }}
