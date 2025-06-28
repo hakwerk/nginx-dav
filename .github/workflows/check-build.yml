@@ -65,7 +65,7 @@ jobs:
 
       - name: Check if we have that version already
         id: our_meta
-        uses: hakwerk/gha-docker-registry-tag-info@v2.1.0
+        uses: hakwerk/gha-docker-registry-tag-info@v2.1.2
         with:
           image: "${{ github.repository }}:${{ env.VERSION }}"
           architecture: "${{ env.ARCHITECURE }}"
